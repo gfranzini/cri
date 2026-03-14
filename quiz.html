@@ -10,9 +10,7 @@
 
 <style>
 
-*{
-box-sizing:border-box;
-}
+*{box-sizing:border-box;}
 
 body{
 font-family:system-ui;
@@ -23,43 +21,31 @@ display:flex;
 justify-content:center;
 }
 
-.container{
-max-width:900px;
-width:100%;
-}
+.container{max-width:900px;width:100%;}
 
 .card{
 background:white;
 padding:20px;
 border-radius:14px;
 box-shadow:0 10px 25px rgba(0,0,0,0.12);
-transition:background 0.3s;
 width:100%;
 }
 
 button{
-padding:14px 18px;
+padding:12px 18px;
 border:none;
 border-radius:10px;
 background:#3a7afe;
 color:white;
 cursor:pointer;
 margin:6px 4px;
-font-size:16px;
+font-size:15px;
 font-weight:600;
 }
 
-.secondary{
-background:#b41818;
-}
-
-.skip{
-background:#f39c12;
-}
-
-.filterBtn{
-background:#6c7a89;
-}
+.secondary{background:#b41818;}
+.skip{background:#f39c12;}
+.filterBtn{background:#6c7a89;}
 
 .option{
 padding:14px;
@@ -67,17 +53,12 @@ border:1px solid #ddd;
 border-radius:10px;
 margin:8px 0;
 cursor:pointer;
-font-size:16px;
-width:100%;
 }
 
-.option:hover{
-background:#eef3ff;
-}
+.option:hover{background:#eef3ff;}
 
 input{
 width:100%;
-max-width:100%;
 padding:14px;
 margin-top:10px;
 border-radius:10px;
@@ -85,9 +66,7 @@ border:1px solid #ccc;
 font-size:16px;
 }
 
-.hidden{
-display:none;
-}
+.hidden{display:none;}
 
 .progressContainer{
 width:100%;
@@ -95,7 +74,7 @@ height:14px;
 background:#e5e5e5;
 border-radius:8px;
 overflow:hidden;
-margin-top:10px;
+margin-top:12px;
 }
 
 #progressBar{
@@ -105,37 +84,19 @@ background:#27ae60;
 transition:width 0.3s;
 }
 
-.correctFlash{
-animation:correctAnim 0.6s;
-}
-
-.wrongFlash{
-animation:wrongAnim 0.6s;
-}
+.correctFlash{animation:correctAnim 0.6s;}
+.wrongFlash{animation:wrongAnim 0.6s;}
 
 @keyframes correctAnim{
-0%{background:#fff;}
+0%{background:white;}
 40%{background:#b8f5c2;}
-100%{background:#fff;}
+100%{background:white;}
 }
 
 @keyframes wrongAnim{
-0%{background:#fff;}
+0%{background:white;}
 40%{background:#ffb0b0;}
-100%{background:#fff;}
-}
-
-@media (max-width:600px){
-
-button{
-width:100%;
-margin:6px 0;
-}
-
-.card{
-padding:16px;
-}
-
+100%{background:white;}
 }
 
 </style>
@@ -159,15 +120,13 @@ padding:16px;
 
 </div>
 
-<button class="secondary" onclick="resetProgress()">Reset progressi</button>
-
 <hr>
 
 <div id="question"></div>
 
 <div id="answers"></div>
 
-<input id="textAnswer" class="hidden" enterkeyhint="done" autocomplete="off">
+<input id="textAnswer" class="hidden" enterkeyhint="done">
 
 <div id="rangeInputs" class="hidden">
 
@@ -188,8 +147,11 @@ padding:16px;
 
 <div id="stats"></div>
 
-</div>
+<br>
 
+<button class="secondary" onclick="resetProgress()">Reset progressi</button>
+
+</div>
 </div>
 
 <script src="data.js"></script>
@@ -207,69 +169,28 @@ let answered=false
 let skipped=[]
 let memory={}
 
+const textAnswer=document.getElementById("textAnswer")
+const rangeInputs=document.getElementById("rangeInputs")
+const rangeMin=document.getElementById("rangeMin")
+const rangeMax=document.getElementById("rangeMax")
+
 function animateResult(ok){
 
 let card=document.getElementById("card")
 
+card.classList.remove("correctFlash","wrongFlash")
+
 if(ok){
-
-card.classList.remove("wrongFlash")
 card.classList.add("correctFlash")
-
-setTimeout(()=>{
-card.classList.remove("correctFlash")
-},600)
-
 }else{
-
-card.classList.remove("correctFlash")
 card.classList.add("wrongFlash")
+}
 
 setTimeout(()=>{
-card.classList.remove("wrongFlash")
+
+card.classList.remove("correctFlash","wrongFlash")
+
 },600)
-
-}
-
-}
-
-function saveProgress(){
-
-localStorage.setItem("quizProgress",JSON.stringify({
-score:score,
-total:total,
-memory:memory
-}))
-
-}
-
-function loadProgress(){
-
-let saved=localStorage.getItem("quizProgress")
-
-if(saved){
-
-let p=JSON.parse(saved)
-
-score=p.score||0
-total=p.total||0
-memory=p.memory||{}
-
-updateStats()
-
-}
-
-}
-
-function resetProgress(){
-
-localStorage.removeItem("quizProgress")
-
-score=0
-total=0
-memory={}
-
-updateStats()
 
 }
 
@@ -285,8 +206,48 @@ block:"start"
 function autoNext(){
 
 setTimeout(()=>{
+
 nextQuestion()
+
 },1200)
+
+}
+
+function saveProgress(){
+
+localStorage.setItem("quizProgress",JSON.stringify({
+score,total,memory
+}))
+
+}
+
+function loadProgress(){
+
+let s=localStorage.getItem("quizProgress")
+
+if(s){
+
+let p=JSON.parse(s)
+
+score=p.score||0
+total=p.total||0
+memory=p.memory||{}
+
+}
+
+updateStats()
+
+}
+
+function resetProgress(){
+
+localStorage.removeItem("quizProgress")
+
+score=0
+total=0
+memory={}
+
+updateStats()
 
 }
 
@@ -308,10 +269,8 @@ nextQuestion()
 
 function randomItem(){
 
-if(skipped.length>0 && Math.random()<0.3){
-
+if(skipped.length && Math.random()<0.3){
 return skipped.shift()
-
 }
 
 let pool=data
@@ -328,18 +287,10 @@ return pool[Math.floor(Math.random()*pool.length)]
 
 function updateStats(){
 
-document.getElementById("stats").innerHTML=
-"Punteggio: "+score+" / "+total
+stats.innerHTML="Punteggio: "+score+" / "+total
 
-let percent=0
-
-if(total>0){
-
-percent=(score/total)*100
-
-}
-
-document.getElementById("progressBar").style.width=percent+"%"
+let percent=total?score/total*100:0
+progressBar.style.width=percent+"%"
 
 }
 
@@ -347,8 +298,8 @@ function nextQuestion(){
 
 answered=false
 
-document.getElementById("answers").innerHTML=""
-document.getElementById("feedback").innerHTML=""
+answers.innerHTML=""
+feedback.innerHTML=""
 
 textAnswer.value=""
 rangeMin.value=""
@@ -365,15 +316,77 @@ if(current.type==="acro"){
 
 question.innerHTML="Significato di <b>"+current.term+"</b>"
 textAnswer.classList.remove("hidden")
+textAnswer.focus()
+
+return
+}
+
+if(current.type==="num"){
+
+question.innerHTML="Valore: <b>"+current.term+"</b>"
+
+if(current.rule==="range"){
+rangeInputs.classList.remove("hidden")
+rangeMin.focus()
+}else{
+textAnswer.classList.remove("hidden")
+textAnswer.focus()
+}
+
+return
+}
+
+question.innerHTML="Cosa significa <b>"+current.term+"</b>?"
+
+let options=[current.def]
+
+let defs=data.filter(d=>d.def).map(d=>d.def)
+
+while(options.length<4){
+
+let r=defs[Math.floor(Math.random()*defs.length)]
+if(!options.includes(r)) options.push(r)
 
 }
+
+options.sort(()=>Math.random()-0.5)
+
+options.forEach(o=>{
+
+let div=document.createElement("div")
+div.className="option"
+div.innerText=o
+div.onclick=()=>checkMulti(o)
+
+answers.appendChild(div)
+
+})
+
+}
+
+function checkMulti(ans){
+
+if(answered) return
+answered=true
+
+let ok=ans===current.def
+
+animateResult(ok)
+
+if(ok){score++;memory[current.term]=0}
+else{memory[current.term]=1}
+
+total++
+
+updateStats()
+saveProgress()
+autoNext()
 
 }
 
 function checkText(){
 
 if(answered) return
-
 answered=true
 
 let user=textAnswer.value.trim().toLowerCase()
@@ -383,43 +396,29 @@ let ok=user===correct
 
 animateResult(ok)
 
-if(ok){
-
-score++
-memory[current.term]=0
-
-}else{
-
-memory[current.term]=1
-
-}
+if(ok){score++;memory[current.term]=0}
+else{memory[current.term]=1}
 
 total++
+
 updateStats()
 saveProgress()
-
 autoNext()
 
 }
 
-let textAnswer=document.getElementById("textAnswer")
-
-textAnswer.addEventListener("keyup",function(e){
+textAnswer.addEventListener("keyup",e=>{
 
 if(e.key==="Enter"){
-
 checkText()
-
 }
 
 })
 
-textAnswer.addEventListener("blur",function(){
+textAnswer.addEventListener("blur",()=>{
 
-if(!answered && textAnswer.value.trim()!==""){
-
+if(!answered && textAnswer.value.trim()){
 checkText()
-
 }
 
 })
