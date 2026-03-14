@@ -6,9 +6,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Quiz Soccorso</title>
+<title>Quiz Primo Soccorso</title>
 
 <style>
+
+*{
+box-sizing:border-box;
+}
 
 body{
 font-family:system-ui;
@@ -30,6 +34,7 @@ padding:20px;
 border-radius:14px;
 box-shadow:0 10px 25px rgba(0,0,0,0.12);
 transition:background 0.3s;
+width:100%;
 }
 
 button{
@@ -63,6 +68,7 @@ border-radius:10px;
 margin:8px 0;
 cursor:pointer;
 font-size:16px;
+width:100%;
 }
 
 .option:hover{
@@ -71,6 +77,7 @@ background:#eef3ff;
 
 input{
 width:100%;
+max-width:100%;
 padding:14px;
 margin-top:10px;
 border-radius:10px;
@@ -125,6 +132,10 @@ width:100%;
 margin:6px 0;
 }
 
+.card{
+padding:16px;
+}
+
 }
 
 </style>
@@ -136,7 +147,7 @@ margin:6px 0;
 
 <div class="card">
 
-<h2>🚑 Quiz Soccorso</h2>
+<h2>🚑 Quiz Primo Soccorso</h2>
 
 <button onclick="setMode('quiz')">Quiz</button>
 <button onclick="setMode('case')">Casi clinici</button>
@@ -150,13 +161,15 @@ margin:6px 0;
 
 </div>
 
+<button class="secondary" onclick="resetProgress()">Reset progressi</button>
+
 <hr>
 
 <div id="question"></div>
 
 <div id="answers"></div>
 
-<input id="textAnswer" class="hidden">
+<input id="textAnswer" class="hidden" enterkeyhint="done" autocomplete="off">
 
 <div id="rangeInputs" class="hidden">
 
@@ -195,6 +208,67 @@ let current
 let answered=false
 let skipped=[]
 let memory={}
+
+function saveProgress(){
+
+let progress={
+score:score,
+total:total,
+memory:memory
+}
+
+localStorage.setItem("quizProgress",JSON.stringify(progress))
+
+}
+
+function loadProgress(){
+
+let saved=localStorage.getItem("quizProgress")
+
+if(saved){
+
+let progress=JSON.parse(saved)
+
+score=progress.score||0
+total=progress.total||0
+memory=progress.memory||{}
+
+updateStats()
+
+}
+
+}
+
+function resetProgress(){
+
+localStorage.removeItem("quizProgress")
+
+score=0
+total=0
+memory={}
+
+updateStats()
+
+}
+
+function scrollToQuiz(){
+
+let card=document.querySelector(".card")
+
+card.scrollIntoView({
+behavior:"smooth",
+block:"start"
+})
+
+}
+
+function autoNext(){
+
+setTimeout(function(){
+nextQuestion()
+},1200)
+
+}
 
 function animateResult(ok){
 
@@ -265,12 +339,28 @@ return pool[Math.floor(Math.random()*pool.length)]
 
 }
 
+function updateStats(){
+
+document.getElementById("stats").innerHTML=
+"Punteggio: "+score+" / "+total
+
+let percent=0
+
+if(total>0){
+percent=(score/total)*100
+}
+
+document.getElementById("progressBar").style.width=percent+"%"
+
+}
+
 function nextQuestion(){
 
 answered=false
 
 document.getElementById("answers").innerHTML=""
 document.getElementById("feedback").innerHTML=""
+
 document.getElementById("textAnswer").value=""
 document.getElementById("rangeMin").value=""
 document.getElementById("rangeMax").value=""
@@ -280,10 +370,7 @@ document.getElementById("rangeInputs").classList.add("hidden")
 
 current=randomItem()
 
-if(mode==="case"){
-generateCase()
-return
-}
+scrollToQuiz()
 
 if(current.type==="acro"){
 
@@ -296,39 +383,6 @@ return
 }
 
 if(current.type==="num"){
-
-let reverse=Math.random()<0.4
-
-if(reverse){
-
-let valueText=getValueText(current)
-
-document.getElementById("question").innerHTML=
-"A quale parametro corrisponde il valore <b>"+valueText+"</b>?"
-
-let answers=[current.term]
-
-let options=data.filter(d=>d.type==="num").map(d=>d.term)
-
-while(answers.length<4){
-
-let r=options[Math.floor(Math.random()*options.length)]
-if(!answers.includes(r))answers.push(r)
-
-}
-
-answers.sort(()=>Math.random()-0.5)
-
-answers.forEach(a=>{
-let el=document.createElement("div")
-el.className="option"
-el.innerText=a
-el.onclick=()=>checkReverse(a)
-document.getElementById("answers").appendChild(el)
-})
-
-return
-}
 
 document.getElementById("question").innerHTML=
 "Valore: <b>"+current.term+"</b>"
@@ -350,21 +404,59 @@ let answers=[current.def]
 let defs=data.filter(d=>d.def).map(d=>d.def)
 
 while(answers.length<4){
+
 let r=defs[Math.floor(Math.random()*defs.length)]
-if(!answers.includes(r))answers.push(r)
+
+if(!answers.includes(r)) answers.push(r)
+
 }
 
 answers.sort(()=>Math.random()-0.5)
 
 answers.forEach(a=>{
+
 let el=document.createElement("div")
 el.className="option"
 el.innerText=a
+
 el.onclick=()=>checkMulti(a)
+
 document.getElementById("answers").appendChild(el)
+
 })
 
 }
+
+let textInput=document.getElementById("textAnswer")
+
+textInput.addEventListener("keydown",function(e){
+
+if(e.key==="Enter"){
+handleTextSubmit()
+}
+
+})
+
+textInput.addEventListener("change",function(){
+handleTextSubmit()
+})
+
+function handleTextSubmit(){
+
+if(answered) return
+
+if(current.type==="acro"){
+checkText()
+}
+
+if(current.type==="num" && current.rule==="value"){
+checkNumber()
+}
+
+}
+
+loadProgress()
+nextQuestion()
 
 </script>
 
