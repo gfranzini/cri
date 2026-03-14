@@ -78,13 +78,6 @@ border:1px solid #ccc;
 font-size:16px;
 }
 
-.flashcard{
-font-size:22px;
-padding:40px;
-text-align:center;
-cursor:pointer;
-}
-
 .hidden{
 display:none;
 }
@@ -132,11 +125,6 @@ width:100%;
 margin:6px 0;
 }
 
-.flashcard{
-font-size:20px;
-padding:30px 10px;
-}
-
 }
 
 </style>
@@ -151,7 +139,6 @@ padding:30px 10px;
 <h2>🚑 Quiz Soccorso</h2>
 
 <button onclick="setMode('quiz')">Quiz</button>
-<button onclick="setMode('flash')">Flashcards</button>
 <button onclick="setMode('case')">Casi clinici</button>
 
 <div>
@@ -292,14 +279,6 @@ document.getElementById("textAnswer").classList.add("hidden")
 document.getElementById("rangeInputs").classList.add("hidden")
 
 current=randomItem()
-
-if(mode==="flash"){
-
-document.getElementById("question").innerHTML=
-`<div class="flashcard" onclick="flip()">${current.term}</div>`
-
-return
-}
 
 if(mode==="case"){
 generateCase()
