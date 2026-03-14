@@ -114,15 +114,15 @@ animation:wrongAnim 0.6s;
 }
 
 @keyframes correctAnim{
-0%{background:#ffffff;}
+0%{background:#fff;}
 40%{background:#b8f5c2;}
-100%{background:#ffffff;}
+100%{background:#fff;}
 }
 
 @keyframes wrongAnim{
-0%{background:#ffffff;}
+0%{background:#fff;}
 40%{background:#ffb0b0;}
-100%{background:#ffffff;}
+100%{background:#fff;}
 }
 
 @media (max-width:600px){
@@ -145,16 +145,14 @@ padding:16px;
 
 <div class="container">
 
-<div class="card">
+<div class="card" id="card">
 
 <h2>🚑 Quiz Primo Soccorso</h2>
 
-<button onclick="setMode('quiz')">Quiz</button>
-<button onclick="setMode('case')">Casi clinici</button>
-
 <div>
 
-<button class="filterBtn" onclick="setFilter('all')">Tutti</button>
+<button onclick="setMode('quiz')">Quiz</button>
+<button onclick="setMode('case')">Casi clinici</button>
 <button class="filterBtn" onclick="setFilter('acro')">Solo acronimi</button>
 <button class="filterBtn" onclick="setFilter('num')">Solo valori</button>
 <button class="filterBtn" onclick="setFilter('errors')">Solo errori</button>
@@ -173,8 +171,8 @@ padding:16px;
 
 <div id="rangeInputs" class="hidden">
 
-<input id="rangeMin" type="number" inputmode="numeric" placeholder="min">
-<input id="rangeMax" type="number" inputmode="numeric" placeholder="max">
+<input id="rangeMin" type="number" placeholder="min">
+<input id="rangeMax" type="number" placeholder="max">
 
 </div>
 
@@ -199,7 +197,7 @@ padding:16px;
 <script>
 
 let mode="quiz"
-let filter="all"
+let filter=null
 
 let score=0
 let total=0
@@ -209,15 +207,39 @@ let answered=false
 let skipped=[]
 let memory={}
 
+function animateResult(ok){
+
+let card=document.getElementById("card")
+
+if(ok){
+
+card.classList.remove("wrongFlash")
+card.classList.add("correctFlash")
+
+setTimeout(()=>{
+card.classList.remove("correctFlash")
+},600)
+
+}else{
+
+card.classList.remove("correctFlash")
+card.classList.add("wrongFlash")
+
+setTimeout(()=>{
+card.classList.remove("wrongFlash")
+},600)
+
+}
+
+}
+
 function saveProgress(){
 
-let progress={
+localStorage.setItem("quizProgress",JSON.stringify({
 score:score,
 total:total,
 memory:memory
-}
-
-localStorage.setItem("quizProgress",JSON.stringify(progress))
+}))
 
 }
 
@@ -227,11 +249,11 @@ let saved=localStorage.getItem("quizProgress")
 
 if(saved){
 
-let progress=JSON.parse(saved)
+let p=JSON.parse(saved)
 
-score=progress.score||0
-total=progress.total||0
-memory=progress.memory||{}
+score=p.score||0
+total=p.total||0
+memory=p.memory||{}
 
 updateStats()
 
@@ -253,9 +275,7 @@ updateStats()
 
 function scrollToQuiz(){
 
-let card=document.querySelector(".card")
-
-card.scrollIntoView({
+document.getElementById("card").scrollIntoView({
 behavior:"smooth",
 block:"start"
 })
@@ -264,74 +284,41 @@ block:"start"
 
 function autoNext(){
 
-setTimeout(function(){
+setTimeout(()=>{
 nextQuestion()
 },1200)
 
 }
 
-function animateResult(ok){
-
-let card=document.querySelector(".card")
-
-if(ok){
-card.classList.add("correctFlash")
-setTimeout(()=>card.classList.remove("correctFlash"),600)
-}else{
-card.classList.add("wrongFlash")
-setTimeout(()=>card.classList.remove("wrongFlash"),600)
-}
-
-}
-
-function levenshtein(a,b){
-
-const matrix=[]
-
-for(let i=0;i<=b.length;i++){matrix[i]=[i]}
-for(let j=0;j<=a.length;j++){matrix[0][j]=j}
-
-for(let i=1;i<=b.length;i++){
-for(let j=1;j<=a.length;j++){
-
-if(b.charAt(i-1)==a.charAt(j-1)){
-matrix[i][j]=matrix[i-1][j-1]
-}else{
-matrix[i][j]=Math.min(
-matrix[i-1][j-1]+1,
-matrix[i][j-1]+1,
-matrix[i-1][j]+1
-)
-}
-
-}
-}
-
-return matrix[b.length][a.length]
-
-}
-
 function setMode(m){
+
 mode=m
+filter=null
 nextQuestion()
+
 }
 
 function setFilter(f){
+
+mode="quiz"
 filter=f
 nextQuestion()
+
 }
 
 function randomItem(){
 
 if(skipped.length>0 && Math.random()<0.3){
+
 return skipped.shift()
+
 }
 
 let pool=data
 
 if(filter==="acro") pool=data.filter(d=>d.type==="acro")
 if(filter==="num") pool=data.filter(d=>d.type==="num")
-if(filter==="errors") pool=data.filter(d=>memory[d.term]===1)
+if(filter==="errors") pool=data.filter(d=>memory[d.term])
 
 if(pool.length===0) pool=data
 
@@ -347,7 +334,9 @@ document.getElementById("stats").innerHTML=
 let percent=0
 
 if(total>0){
+
 percent=(score/total)*100
+
 }
 
 document.getElementById("progressBar").style.width=percent+"%"
@@ -361,12 +350,12 @@ answered=false
 document.getElementById("answers").innerHTML=""
 document.getElementById("feedback").innerHTML=""
 
-document.getElementById("textAnswer").value=""
-document.getElementById("rangeMin").value=""
-document.getElementById("rangeMax").value=""
+textAnswer.value=""
+rangeMin.value=""
+rangeMax.value=""
 
-document.getElementById("textAnswer").classList.add("hidden")
-document.getElementById("rangeInputs").classList.add("hidden")
+textAnswer.classList.add("hidden")
+rangeInputs.classList.add("hidden")
 
 current=randomItem()
 
@@ -374,86 +363,66 @@ scrollToQuiz()
 
 if(current.type==="acro"){
 
-document.getElementById("question").innerHTML=
-"Significato di <b>"+current.term+"</b>"
-
-document.getElementById("textAnswer").classList.remove("hidden")
-
-return
-}
-
-if(current.type==="num"){
-
-document.getElementById("question").innerHTML=
-"Valore: <b>"+current.term+"</b>"
-
-if(current.rule==="range"){
-document.getElementById("rangeInputs").classList.remove("hidden")
-}else{
-document.getElementById("textAnswer").classList.remove("hidden")
-}
-
-return
-}
-
-document.getElementById("question").innerHTML=
-"Cosa significa <b>"+current.term+"</b>?"
-
-let answers=[current.def]
-
-let defs=data.filter(d=>d.def).map(d=>d.def)
-
-while(answers.length<4){
-
-let r=defs[Math.floor(Math.random()*defs.length)]
-
-if(!answers.includes(r)) answers.push(r)
+question.innerHTML="Significato di <b>"+current.term+"</b>"
+textAnswer.classList.remove("hidden")
 
 }
 
-answers.sort(()=>Math.random()-0.5)
-
-answers.forEach(a=>{
-
-let el=document.createElement("div")
-el.className="option"
-el.innerText=a
-
-el.onclick=()=>checkMulti(a)
-
-document.getElementById("answers").appendChild(el)
-
-})
-
 }
 
-let textInput=document.getElementById("textAnswer")
-
-textInput.addEventListener("keydown",function(e){
-
-if(e.key==="Enter"){
-handleTextSubmit()
-}
-
-})
-
-textInput.addEventListener("change",function(){
-handleTextSubmit()
-})
-
-function handleTextSubmit(){
+function checkText(){
 
 if(answered) return
 
-if(current.type==="acro"){
+answered=true
+
+let user=textAnswer.value.trim().toLowerCase()
+let correct=current.def.toLowerCase()
+
+let ok=user===correct
+
+animateResult(ok)
+
+if(ok){
+
+score++
+memory[current.term]=0
+
+}else{
+
+memory[current.term]=1
+
+}
+
+total++
+updateStats()
+saveProgress()
+
+autoNext()
+
+}
+
+let textAnswer=document.getElementById("textAnswer")
+
+textAnswer.addEventListener("keyup",function(e){
+
+if(e.key==="Enter"){
+
 checkText()
-}
-
-if(current.type==="num" && current.rule==="value"){
-checkNumber()
-}
 
 }
+
+})
+
+textAnswer.addEventListener("blur",function(){
+
+if(!answered && textAnswer.value.trim()!==""){
+
+checkText()
+
+}
+
+})
 
 loadProgress()
 nextQuestion()
